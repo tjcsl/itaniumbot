@@ -22,15 +22,18 @@ class ItaniumBot(irc.IRCClient):
         if command == "reload":
             try:
                 self.modules = self.factory.load_modules()
+                self.msg(channel, "Modules reloaded successfully.")
             except Exception, e:
                 self.msg(channel, "error: %s" % e)
             return
-
+        if command == "list":
+            self.msg(channel, ", ".join([i.replace("modules.", "") for i in self.modules]))
+            return
         try:
             command = "modules." + command
             self.msg(channel, self.modules[command].run(*args))
         except Exception, e:
-            self.msg(channel, "error: %s" % e)
+            pass
         
 
 class ItaniumBotFactory(protocol.ClientFactory):
@@ -42,6 +45,7 @@ class ItaniumBotFactory(protocol.ClientFactory):
     
     def load_modules(self):
         modlist = os.listdir("modules")
+        modlist = [i for i in modlist if "__init__" not in i]
         modlist = ["modules.%s" % (i[:-3]) for i in modlist if i.endswith(".py")]
         mods = {i: importlib.import_module(i) for i in modlist}
         return mods
